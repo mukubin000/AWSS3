@@ -1,16 +1,53 @@
 openapi: 3.0.0
 info:
-  title: Direct S3 API
+  title: S3 Generic API
   version: 1.0.0
+  description: Generic S3 API for bucket operations using AWS Signature Version 4
 servers:
   - url: https://s3.{region}.amazonaws.com
     variables:
       region:
         default: us-east-1
+        enum:
+          - us-east-1
+          - us-east-2
+          - us-west-1
+          - us-west-2
+          - eu-west-1
+          - ap-southeast-1
+          - ap-southeast-2
 paths:
+  /{bucket}:
+    get:
+      summary: List objects in bucket
+      parameters:
+        - name: bucket
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: prefix
+          in: query
+          required: false
+          schema:
+            type: string
+        - name: max-keys
+          in: query
+          required: false
+          schema:
+            type: integer
+      security:
+        - awsv4: []
+      responses:
+        '200':
+          description: Successful bucket listing
+          content:
+            application/xml:
+              schema:
+                type: object
   /{bucket}/{key}:
     get:
-      summary: Get object from S3
+      summary: Get object from bucket
       parameters:
         - name: bucket
           in: path
@@ -26,9 +63,14 @@ paths:
         - awsv4: []
       responses:
         '200':
-          description: Successful response
+          description: Successfully retrieved object
+          content:
+            application/octet-stream:
+              schema:
+                type: string
+                format: binary
     put:
-      summary: Upload object to S3
+      summary: Upload object to bucket
       parameters:
         - name: bucket
           in: path
@@ -40,9 +82,19 @@ paths:
           required: true
           schema:
             type: string
+        - name: Content-Type
+          in: header
+          required: false
+          schema:
+            type: string
+        - name: Content-Length
+          in: header
+          required: true
+          schema:
+            type: integer
       requestBody:
         content:
-          application/octet-stream:
+          '*/*':
             schema:
               type: string
               format: binary
@@ -50,7 +102,25 @@ paths:
         - awsv4: []
       responses:
         '200':
-          description: Successfully uploaded
+          description: Successfully uploaded object
+    delete:
+      summary: Delete object from bucket
+      parameters:
+        - name: bucket
+          in: path
+          required: true
+          schema:
+            type: string
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - awsv4: []
+      responses:
+        '204':
+          description: Successfully deleted object
 
 components:
   securitySchemes:
@@ -58,4 +128,4 @@ components:
       type: apiKey
       name: Authorization
       in: header
-      x-amazon-apigateway-authtype: awsSigv4
+      description: AWS Signature Version 4 authentication
