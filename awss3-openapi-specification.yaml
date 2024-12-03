@@ -1,0 +1,61 @@
+openapi: 3.0.0
+info:
+  title: S3 API
+  version: 1.0.0
+paths:
+  /s3:
+    get:
+      summary: Download file from S3
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successful response
+          content:
+            application/json:
+              schema:
+                type: object
+    put:
+      summary: Upload file to S3
+      parameters:
+        - name: key
+          in: query
+          required: true
+          schema:
+            type: string
+      requestBody:
+        content:
+          application/octet-stream:
+            schema:
+              type: string
+              format: binary
+      responses:
+        '200':
+          description: Successfully uploaded
+          content:
+            application/json:
+              schema:
+                type: object
+
+components:
+  securitySchemes:
+    aws4Auth:
+      type: apiKey
+      name: Authorization
+      in: header
+
+x-amazon-apigateway-integration:
+  credentials: "arn:aws:iam::ACCOUNT_ID:role/S3AccessRole"
+  type: aws
+  uri: "arn:aws:apigateway:REGION:s3:path/{key}"
+  httpMethod: GET
+  requestParameters:
+    integration.request.path.key: "method.request.querystring.key"
+
+x-amazon-apigateway-binary-media-types:
+  - application/octet-stream
+  - image/jpeg
