@@ -1,29 +1,42 @@
 openapi: 3.0.0
 info:
-  title: S3 API
+  title: Direct S3 API
   version: 1.0.0
+servers:
+  - url: https://s3.{region}.amazonaws.com
+    variables:
+      region:
+        default: us-east-1
 paths:
-  /s3:
+  /{bucket}/{key}:
     get:
-      summary: Download file from S3
+      summary: Get object from S3
       parameters:
-        - name: key
-          in: query
+        - name: bucket
+          in: path
           required: true
           schema:
             type: string
+        - name: key
+          in: path
+          required: true
+          schema:
+            type: string
+      security:
+        - awsv4: []
       responses:
         '200':
           description: Successful response
-          content:
-            application/json:
-              schema:
-                type: object
     put:
-      summary: Upload file to S3
+      summary: Upload object to S3
       parameters:
+        - name: bucket
+          in: path
+          required: true
+          schema:
+            type: string
         - name: key
-          in: query
+          in: path
           required: true
           schema:
             type: string
@@ -33,29 +46,16 @@ paths:
             schema:
               type: string
               format: binary
+      security:
+        - awsv4: []
       responses:
         '200':
           description: Successfully uploaded
-          content:
-            application/json:
-              schema:
-                type: object
 
 components:
   securitySchemes:
-    aws4Auth:
+    awsv4:
       type: apiKey
       name: Authorization
       in: header
-
-x-amazon-apigateway-integration:
-  credentials: "arn:aws:iam::ACCOUNT_ID:role/S3AccessRole"
-  type: aws
-  uri: "arn:aws:apigateway:REGION:s3:path/{key}"
-  httpMethod: GET
-  requestParameters:
-    integration.request.path.key: "method.request.querystring.key"
-
-x-amazon-apigateway-binary-media-types:
-  - application/octet-stream
-  - image/jpeg
+      x-amazon-apigateway-authtype: awsSigv4
